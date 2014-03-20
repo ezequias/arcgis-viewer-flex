@@ -23,14 +23,10 @@ package widgets.Coordinate
  * Utility class to pretty print decimal degree numbers.
  * @private
  */
-public final class DegToDMS
+public final class CoordinateUtil
 {
     // Constants to define the format.
-    public static const LAT:String = "lat";
-
-    public static const LON:String = "lon";
-
-    /**
+     /**
      * Utility function to format a decimal degree number into a pretty string with degrees, minutes and seconds.
      * @param decDeg the decimal degree number.
      * @param decDir "lat" for a latitude number, "lon" for a longitude value.
@@ -56,7 +52,7 @@ public final class DegToDMS
         }
         var smin:String = min < 10 ? "0" + min + "' " : min + "' ";
         var ssec:String = sec < 10 ? "0" + sec + "\" " : sec + "\" ";
-        var sdir:String = (decDir == LAT) ? (decDeg < 0 ? "S" : "N") : (decDeg < 0 ? "O" : "L");
+        var sdir:String = (decDir == LAT) ? (decDeg < 0 ? "S" : "N") : (decDeg < 0 ? "W" : "E");
         return deg + "\xB0 " + smin + ssec + sdir;
     }
 }

@@ -24,15 +24,22 @@
                    widgetConfigLoaded="basewidget_widgetConfigLoadedHandler(event)">
     <fx:Script>
         <![CDATA[
-            import com.esri.ags.events.MapEvent;
-            import com.esri.ags.geometry.MapPoint;
-            import com.esri.ags.utils.WebMercatorUtil;
-
-            import mx.formatters.NumberBaseRoundType;
-            import mx.utils.StringUtil;
+			import com.esri.ags.events.ExtentEvent;
+			import com.esri.ags.events.MapEvent;
+			import com.esri.ags.events.ZoomEvent;
+			import com.esri.ags.geometry.MapPoint;
+			import com.esri.ags.utils.WebMercatorUtil;
+			
+			import mx.controls.Alert;
+			import mx.effects.Resize;
+			import mx.events.ResizeEvent;
+			import mx.formatters.NumberBaseRoundType;
+			import mx.utils.StringUtil;
 
             private var m_template:String;
             private var m_func:Function = substitute;
+			private var outputUnit:String;
+			private var m_primeiraCarga:Boolean = true;
 
             protected function basewidget_widgetConfigLoadedHandler(event:Event):void
             {
@@ -54,8 +61,8 @@
                     const fontSize:String = configXML.labelstyle.@fontsize[0] || configXML.label.@fontsize[0];
                     coords.setStyle("fontSize", parseInt(fontSize ? fontSize : "9"));
                     const fontWeight:String = configXML.labelstyle.@fontweight[0] || configXML.label.@fontweight[0];
-                    coords.setStyle("fontWeight", fontWeight ? fontWeight : "bold");
-
+                    coords.setStyle("fontWeight", fontWeight ? fontWeight : "bold");					
+					
                     // If no template specified, show them with a space in between (except for special case below)
                     m_template = configXML.labels.template[0] || configXML.label.@template[0] || "{0} {1}";
 
@@ -67,52 +74,71 @@
                     {
                         map.addEventListener(MapEvent.LOAD, map_loadHandler);
                     }
+					
+					top = owner.height - 15;					
                 }
 
                 function map_loadHandler(event:MapEvent):void
                 {
-                    map.removeEventListener(MapEvent.LOAD, map_loadHandler);
-                    const wkid:int = map.spatialReference.wkid;
-                    m_func = substitute;
-                    const outputUnit:String = configXML.outputunit;
-                    if (outputUnit === "mercator")
-                    {
-                        if (wkid === 4326 || wkid === 4269 || wkid === 4267)
-                        {
-                            m_func = geographicToMercator;
-                        }
-                    }
-                    else if (outputUnit === "geo")
-                    {
-                        if (wkid === 102100 || wkid === 102113 || wkid === 3857)
-                        {
-                            m_func = mercatorToGeographic;
-                            // special default for geographic outputs
-                            m_template = configXML.labels.template[0] || configXML.label.@template[0] || getDefaultString("latitudeLabel") + ":{1}   " + getDefaultString("longitudeLabel") + ":{0}";
-                            numberFormatter.precision = parseFloat(configXML.numberformatter.@precision || "6");
-                        }
-                        else if (wkid === 4326 || wkid === 4269 || wkid === 4267)
-                        {
-                            // special default for geographic outputs
-                            m_template = configXML.labels.template[0] || configXML.label.@template[0] || getDefaultString("latitudeLabel") + ":{1}   " + getDefaultString("longitudeLabel") + ":{0}";
-                            numberFormatter.precision = parseFloat(configXML.numberformatter.@precision || "6");
-                        }
-                    }
-                    else if (outputUnit === "dms")
-                    {
-                        if (wkid === 102100 || wkid === 102113 || wkid === 3857)
-                        {
-                            m_func = mercatorToDMS;
-                        }
-                        else if (wkid === 4326 || wkid === 4269 || wkid === 4267)
-                        {
-                            m_func = geographicToDMS;
-                        }
-                    }
-                    map.addEventListener(MouseEvent.MOUSE_MOVE, map_mouseMoveHandler);
-                }
+					map.removeEventListener(MapEvent.LOAD, map_loadHandler);
+                    loadUnit();
+                }				
             }
 
+			private function loadUnit(): void
+			{
+				
+				const wkid:int = map.spatialReference.wkid;
+				m_func = substitute;
+				if (m_primeiraCarga)
+				{
+					outputUnit = configXML.outputunit;
+					m_primeiraCarga = false;
+				}
+				
+				if (outputUnit === "mercator")
+				{
+					m_template = configXML.labels.template[0] || configXML.label.@template[0] || "{0} {1}";
+					if (wkid === 4326 || wkid === 4269 || wkid === 4267)
+					{
+						m_func = geographicToMercator;
+					}
+				}
+				else if (outputUnit === "geo")
+				{
+					m_template = configXML.labels.template[0] || configXML.label.@template[0] || getDefaultString("latitudeLabel") + ":{1}   " + getDefaultString("longitudeLabel") + ":{0}";
+					m_func = mercatorToGeographic;
+					
+					if (wkid === 102100 || wkid === 102113 || wkid === 3857)
+					{
+						
+						numberFormatter.precision = parseFloat(configXML.numberformatter.@precision || "6");
+					}
+					else if (wkid === 4326 || wkid === 4269 || wkid === 4267)
+					{
+						numberFormatter.precision = parseFloat(configXML.numberformatter.@precision || "6");
+					}
+				}
+				else if (outputUnit === "dms")
+				{
+					m_template = configXML.labels.template[0] || configXML.label.@template[0] || "{0} {1}";					
+					if (wkid === 102100 || wkid === 102113 || wkid === 3857)
+					{
+						m_func = mercatorToDMS;
+					}
+					else if (wkid === 4326 || wkid === 4269 || wkid === 4267)
+					{
+						m_func = mercatorToDMS;
+					}
+				}
+				else if (outputUnit == "degrees")
+				{
+					m_func = mercatorToDegrees;
+				}
+				map.addEventListener(MouseEvent.MOUSE_MOVE, map_mouseMoveHandler);
+				map.addEventListener(ExtentEvent.EXTENT_CHANGE,map_ExtentUpdateHandler,true,0,false);
+			}
+			
             private function toNumber(value:String):int
             {
                 if (value.substr(0, 2) == "0x")
@@ -135,6 +161,13 @@
                 const geo:MapPoint = WebMercatorUtil.webMercatorToGeographic(web) as MapPoint;
                 return StringUtil.substitute(m_template, DegToDMS.format(geo.x, DegToDMS.LON), DegToDMS.format(geo.y, DegToDMS.LAT));
             }
+			
+			private function mercatorToDegrees(web:MapPoint):String
+			{
+				const geo:MapPoint = WebMercatorUtil.webMercatorToGeographic(web) as MapPoint;
+				return geo. x + " " + geo.y;
+			}
+			
 
             private function geographicToMercator(geo:MapPoint):String
             {
@@ -161,9 +194,84 @@
             private function map_mouseMoveHandler(event:MouseEvent):void
             {
                 const mapPoint:MapPoint = map.toMapFromStage(event.stageX, event.stageY);
+				var nf:NumberFormatter = new NumberFormatter();
+				nf.useThousandsSeparator = true;
+				nf.thousandsSeparatorTo = ".";
+				nf.decimalSeparatorTo = ",";
+				nf.thousandsSeparatorFrom = ".";
+				nf.decimalSeparatorFrom = ",";
                 coords.text = m_func(mapPoint);
             }
-        ]]>
+			
+			private function updateScale(event:MouseEvent):void
+			{
+							}
+			private function map_ExtentUpdateHandler(event:MouseEvent):void
+			{
+				callLater(function(event:MouseEvent):void{
+					Alert.show("updateExtent","BDEP");
+					
+					const mapPoint:MapPoint = map.toMapFromStage(event.stageX, event.stageY);
+					var nf:NumberFormatter = new NumberFormatter();
+					nf.useThousandsSeparator = true;
+					nf.thousandsSeparatorTo = ".";
+					nf.decimalSeparatorTo = ",";
+					nf.thousandsSeparatorFrom = ".";
+					nf.decimalSeparatorFrom = ",";
+					coords.text = m_func(mapPoint) + " Escala 1:" + nf.format(map.scale.toFixed(0));
+				});
+				
+				
+			}
+			
+			protected function coords_clickHandler(event:MouseEvent):void
+			{
+				var de:String = outputUnit;
+				
+				if (outputUnit == "geo")
+				{					
+					voltarParaMercator();
+					"{0} {1}"
+					outputUnit = "dms";					
+					loadUnit();
+					Alert.show(nomeUnidade(de) + " --->  " + nomeUnidade(outputUnit), configXML.labels.windowtitle);
+				}
+				else if (outputUnit == "dms")
+				{
+					outputUnit = "mercator";
+					loadUnit();
+					Alert.show(nomeUnidade(de) + " --->  " + nomeUnidade(outputUnit), configXML.labels.windowtitle);
+				}	
+				else if (outputUnit == "mercator")
+				{				
+					outputUnit = "geo";
+					loadUnit();
+					Alert.show(nomeUnidade(de) + " ---> " + nomeUnidade(outputUnit), configXML.labels.windowtitle);					
+				}				
+			}
+			
+			protected function nomeUnidade(sigla:String):String
+			{
+				var r:String = "";
+				
+				if (sigla == "geo")
+					r = configXML.labels.geo;
+				
+				if (sigla == "dms")
+					r = configXML.labels.dms;
+				
+				if (sigla == "mercator")
+					r = configXML.labels.mercator;
+				
+				return r;
+			}
+			
+			protected function voltarParaMercator():void
+			{
+				outputUnit = "dms";					
+				loadUnit();
+			}
+		]]>
     </fx:Script>
 
     <fx:Declarations>
@@ -176,5 +284,5 @@
                        color="0xFFFFFF"
                        strength="7"/>
     </viewer:filters>
-    <s:Label id="coords" color="0x000000"/>
+    <s:Label id="coords" toolTip="Clique para mudar formato de exibição" useHandCursor="true" mouseChildren="false" buttonMode="true" enabled="true" color="0x000000" click="coords_clickHandler(event)"/>
 </viewer:BaseWidget>

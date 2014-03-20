@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<configuration label="Scale">
+	<thousandsseparator>,</thousandsseparator>
+	<decimalseparator>.</decimalseparator>
+    <labels>
+		<scale>Scale</scale>
+		<setmessage>Set scale to 1:</setmessage>	
+		<tooltip>Click to set scale</tooltip>		
+    </labels>  
+    <setscale>true</setscale>    
+</configuration>

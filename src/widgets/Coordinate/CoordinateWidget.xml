@@ -1,6 +1,14 @@
 <?xml version="1.0" ?>
-<configuration label="Coordinates (default)">
-    <!-- geo, dms, mercator -->
+<configuration label="Coordenadas">
+    <!-- geo, dms, mercator, degrees -->
+    <numberformatter precision="6"/>
+    <labelstyle color="0x000000" fontfamily="Verdana" fontsize="9" fontweight="bold"/>
+    <labels>
+	    <windowtitle>The coordinate label changed</windowtitle>
+	    <geo>Geographic</geo>    
+	    <dms>Degrees, Minutes, Seconds</dms>
+	    <mercator>Mercator</mercator>
+    </labels>    
     <outputunit>geo</outputunit>
 </configuration>
 

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<viewer:BaseWidget xmlns:fx="http://ns.adobe.com/mxml/2009"
+                   xmlns:s="library://ns.adobe.com/flex/spark"
+                   xmlns:mx="library://ns.adobe.com/flex/mx"
+                   xmlns:viewer="com.esri.viewer.*"
+                   layout="horizontal"
+                   widgetConfigLoaded="basewidget_widgetConfigLoadedHandler(event)">
+    <fx:Script>
+        <![CDATA[
+			import com.esri.ags.events.ExtentEvent;
+			import com.esri.ags.events.MapEvent;
+			import com.esri.ags.events.ZoomEvent;
+			import com.esri.ags.geometry.MapPoint;
+			import com.esri.ags.utils.WebMercatorUtil;
+			import com.esri.viewer.managers.MapManager;
+			
+			import mx.controls.Alert;
+			import mx.controls.TextInput;
+			import mx.effects.Resize;
+			import mx.events.ResizeEvent;
+			import mx.formatters.NumberBaseRoundType;
+			import mx.managers.PopUpManager;
+			import mx.utils.StringUtil;
+			
+			import spark.events.TextOperationEvent;
+
+            private var m_template:String;
+			private var outputUnit:String;
+			private var m_primeiraCarga:Boolean = true;
+			private var nf:NumberFormatter;
+
+            protected function basewidget_widgetConfigLoadedHandler(event:Event):void
+            {
+				nf = new NumberFormatter();				
+				
+                if (configXML)
+                {                   
+                    if (map.loaded)
+                    {
+						if (configXML.setscale == "true"){
+							scale.addEventListener(MouseEvent.CLICK,coords_clickHandler);
+							textInput.addEventListener(FocusEvent.FOCUS_OUT, textInput_lostFocus);
+						}
+						
+                        map_loadHandler(null);
+                    }
+                    else
+                    {
+                        map.addEventListener(MapEvent.LOAD, map_loadHandler);										
+                    }						
+                }
+				
+                function map_loadHandler(event:MapEvent):void
+                {				
+					map.removeEventListener(MapEvent.LOAD, map_loadHandler);
+					scale.toolTip = configXML.labels.tooltip;
+
+                    loadUnit();
+                }				
+            }
+
+			private function loadUnit(): void
+			{								
+				map.addEventListener(ExtentEvent.EXTENT_CHANGE, onZoomToChange);
+				showScale();
+			}
+
+			private function onZoomToChange(event:ExtentEvent):void{
+				showScale();
+			}
+			
+			private function showScale():void{				
+				nf.useThousandsSeparator = true;
+				nf.thousandsSeparatorFrom = configXML.thousandsseparator;
+				nf.thousandsSeparatorTo = configXML.thousandsseparator;				
+				nf.decimalSeparatorFrom = configXML.decimalseparator;
+				nf.decimalSeparatorTo = configXML..decimalseparator;
+				scale.text = configXML.labels.scale + " 1:" + nf.format(map.scale.toFixed(0));
+			}	
+			
+			protected function textInput_lostFocus(event:FocusEvent):void
+			{			
+				textInput.visible = false;
+				showScale();
+			}
+			
+			protected function coords_clickHandler(event:MouseEvent):void
+			{			
+				scale.text = configXML.labels.setmessage;
+				textInput.visible = true;
+				textInput.setFocus();
+			}
+			
+			protected function textInput_keyDownHandler(event:KeyboardEvent):void
+			{
+				if (event.keyCode == Keyboard.ENTER)
+				{
+					var n:Number=Number(textInput.text);
+					if (isNaN(n)){
+					} else {
+						map.scale = Number(textInput.text);
+						scale.visible = true;
+						textInput.visible = false;
+						scale.text = nf.format(map.scale.toFixed(0));
+					}
+				}
+			}
+			
+		]]>
+    </fx:Script>
+
+    <fx:Declarations>
+        <mx:NumberFormatter id="numberFormatter"/>
+    </fx:Declarations>
+    <viewer:filters>
+        <mx:GlowFilter alpha="1"
+                       blurX="3"
+                       blurY="3"
+                       color="0xFFFFFF"
+                       strength="7"/>
+    </viewer:filters>
+		<s:HGroup>
+			<s:Label id="scale" useHandCursor="true" buttonMode="true" mouseChildren="false" height="20" verticalAlign="middle" enabled="true" color="0x000000" fontSize="10" fontFamily="Verdana" fontWeight="bold"/>		
+			<s:TextInput id="textInput" enabled="true" keyDown="textInput_keyDownHandler(event)" visible="false" width="90" fontSize="10"/>
+		</s:HGroup>	
+</viewer:BaseWidget>
