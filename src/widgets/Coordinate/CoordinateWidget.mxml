@@ -41,6 +41,11 @@
 			private var outputUnit:String;
 			private var m_primeiraCarga:Boolean = true;
 
+			private var  north: String;
+			private var  south: String;
+			private var  east: String;
+			private var  west: String;
+			
             protected function basewidget_widgetConfigLoadedHandler(event:Event):void
             {
                 if (configXML)
@@ -61,7 +66,11 @@
                     const fontSize:String = configXML.labelstyle.@fontsize[0] || configXML.label.@fontsize[0];
                     coords.setStyle("fontSize", parseInt(fontSize ? fontSize : "9"));
                     const fontWeight:String = configXML.labelstyle.@fontweight[0] || configXML.label.@fontweight[0];
-                    coords.setStyle("fontWeight", fontWeight ? fontWeight : "bold");					
+                    coords.setStyle("fontWeight", fontWeight ? fontWeight : "bold");	
+					north = configXML.labels.northChar;
+					south = configXML.labels.southChar;
+					east = configXML.labels.eastChar;
+					west = configXML.labels.westChar;
 					
                     // If no template specified, show them with a space in between (except for special case below)
                     m_template = configXML.labels.template[0] || configXML.label.@template[0] || "{0} {1}";
@@ -159,7 +168,7 @@
             private function mercatorToDMS(web:MapPoint):String
             {
                 const geo:MapPoint = WebMercatorUtil.webMercatorToGeographic(web) as MapPoint;
-                return StringUtil.substitute(m_template, DegToDMS.format(geo.x, DegToDMS.LON), DegToDMS.format(geo.y, DegToDMS.LAT));
+                return StringUtil.substitute(m_template, DegToDMS.format(geo.x, DegToDMS.LON, north, south, west, east), DegToDMS.format(geo.y, DegToDMS.LAT, north, south, west, east));
             }
 			
 			private function mercatorToDegrees(web:MapPoint):String
@@ -186,8 +195,8 @@
 
             private function geographicToDMS(mapPoint:MapPoint):String
             {
-                const x:String = DegToDMS.format(mapPoint.x, DegToDMS.LON);
-                const y:String = DegToDMS.format(mapPoint.y, DegToDMS.LAT);
+                const x:String = DegToDMS.format(mapPoint.x, DegToDMS.LON, north, south, west, east);
+                const y:String = DegToDMS.format(mapPoint.y, DegToDMS.LAT, north, south, west, east);
                 return StringUtil.substitute(m_template, x, y);
             }
 

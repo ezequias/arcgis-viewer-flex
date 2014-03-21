@@ -1,13 +1,17 @@
 <?xml version="1.0" ?>
-<configuration label="Coordenadas">
+<configuration label="Coordinates">
     <!-- geo, dms, mercator, degrees -->
     <numberformatter precision="6"/>
     <labelstyle color="0x000000" fontfamily="Verdana" fontsize="9" fontweight="bold"/>
     <labels>
-	    <windowtitle>The coordinate label changed</windowtitle>
+	    <windowtitle>The coordinate exibition changed</windowtitle>
 	    <geo>Geographic</geo>    
-	    <dms>Degrees, Minutes, Seconds</dms>
+	    <dms>Degree, Minutes, Seconds</dms>
 	    <mercator>Mercator</mercator>
+  		<northChar>N</northChar>
+	    <southChar>S</southChar>
+	    <westChar>W</westChar>
+	    <eastChar>E</eastChar>	    
     </labels>    
     <outputunit>geo</outputunit>
 </configuration>

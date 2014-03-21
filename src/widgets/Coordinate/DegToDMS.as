@@ -36,7 +36,7 @@ public final class DegToDMS
      * @param decDir "lat" for a latitude number, "lon" for a longitude value.
      * @return A pretty print string with degrees, minutes and seconds.
      */
-    public static function format(decDeg:Number, decDir:String):String
+    public static function format(decDeg:Number, decDir:String, northChar:String, southChar:String, westChar:String, eastChar:String):String
     {
         var d:Number = Math.abs(decDeg);
         var deg:Number = Math.floor(d);
@@ -56,7 +56,7 @@ public final class DegToDMS
         }
         var smin:String = min < 10 ? "0" + min + "' " : min + "' ";
         var ssec:String = sec < 10 ? "0" + sec + "\" " : sec + "\" ";
-        var sdir:String = (decDir == LAT) ? (decDeg < 0 ? "S" : "N") : (decDeg < 0 ? "O" : "L");
+        var sdir:String = (decDir == LAT) ? (decDeg < 0 ? southChar : northChar) : (decDeg < 0 ? westChar : eastChar);
         return deg + "\xB0 " + smin + ssec + sdir;
     }
 }
